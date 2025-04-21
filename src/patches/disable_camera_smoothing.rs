@@ -1,6 +1,8 @@
 use crate::utils;
 
 pub fn disable_camera_smoothing() -> Result<(), String> {
+    println!("Disabling camera smoothing...");
+
     unsafe {
         let game_module = libmem::find_module("ACU.exe").ok_or("game module not found")?;
         let smooth_check =

@@ -23,23 +23,25 @@ fn apply_patches() {
             "Error",
             platform::MsgBoxType::Error,
         );
+        
+        eprintln!("Failed to apply patches: {}", e);
     } else {
-        platform::msg_box(
-            "Patches applied successfully! Press F11 to exit.",
-            "Success",
-            platform::MsgBoxType::Info,
-        );
+        println!("Patches applied successfully!");
     }
 }
 
 fn main_thread(hinst_dll: SendWrapper<HINSTANCE>) {
     unsafe {
+        platform::attach_console();
+        println!("Console attached! Press F11 to exit.");
+
         apply_patches();
 
         while !platform::is_button_down(VK_F11) {
             thread::sleep(std::time::Duration::from_millis(100));
         }
 
+        platform::detach_console();
         FreeLibraryAndExitThread(HMODULE(hinst_dll.0.0), 0);
     }
 }

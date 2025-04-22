@@ -6,10 +6,7 @@ use windows::{
         Foundation::HANDLE,
         System::{
             LibraryLoader::{GetModuleHandleA, GetProcAddress},
-            Threading::{
-                LPTHREAD_START_ROUTINE, OpenThread, THREAD_ALL_ACCESS, THREAD_CREATE_SUSPENDED,
-                THREAD_CREATION_FLAGS, TerminateThread,
-            },
+            Threading::{OpenThread, THREAD_ALL_ACCESS, THREAD_CREATION_FLAGS, TerminateThread},
         },
     },
 };
@@ -94,12 +91,14 @@ unsafe extern "system" fn empty_thread(_: *mut c_void) -> u32 {
 extern "system" fn hk_create_thread(
     lp_thread_attributes: *mut c_void,
     dw_stack_size: usize,
-    mut lp_start_address: *mut c_void,
+    lp_start_address: *mut c_void,
     lp_parameter: *mut c_void,
     dw_creation_flags: THREAD_CREATION_FLAGS,
     lp_thread_id: *mut u32,
 ) -> HANDLE {
     unsafe {
+        let mut lp_start_address = lp_start_address;
+
         if lp_start_address as usize == INTEGRITY_THREAD_START_ADDRESS {
             println!("CreateThread: preventing integrity check thread creation");
             lp_start_address = empty_thread as *mut c_void;

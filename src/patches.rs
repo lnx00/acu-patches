@@ -1,5 +1,6 @@
 pub mod disable_camera_smoothing;
 pub mod disable_integrity_checks;
+pub mod fix_mouse_sensitivity;
 
 fn wait_for_game() {
     loop {
@@ -23,6 +24,7 @@ pub fn run_all_patches() -> Result<(), String> {
     println!("Game is ready! Applying patches...");
 
     disable_camera_smoothing::disable_camera_smoothing()?;
+    fix_mouse_sensitivity::fix_mouse_sensitivity()?;
 
     Ok(())
 }

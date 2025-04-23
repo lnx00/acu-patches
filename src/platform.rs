@@ -1,5 +1,5 @@
 use windows::Win32::System::Console::{AllocConsole, FreeConsole};
-use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState};
+use windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState;
 use windows::Win32::UI::WindowsAndMessaging::*;
 use windows_strings::PCSTR;
 
@@ -27,15 +27,11 @@ pub fn msg_box(msg: &str, title: &str, box_type: MsgBoxType) {
 }
 
 pub fn attach_console() {
-    unsafe {
-        let _ = AllocConsole();
-    }
+    let _ = unsafe { AllocConsole() };
 }
 
 pub fn detach_console() {
-    unsafe {
-        let _ = FreeConsole();
-    }
+    let _ = unsafe { FreeConsole() };
 }
 
 pub fn is_button_down(vk: i32) -> bool {

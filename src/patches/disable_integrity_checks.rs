@@ -6,7 +6,7 @@ use windows::{
         Foundation::HANDLE,
         System::{
             LibraryLoader::{GetModuleHandleA, GetProcAddress},
-            Threading::{OpenThread, THREAD_ALL_ACCESS, THREAD_CREATION_FLAGS, TerminateThread},
+            Threading::{OpenThread, THREAD_ALL_ACCESS, TerminateThread},
         },
     },
 };
@@ -20,7 +20,7 @@ static mut ORIGINAL_CREATE_THREAD: Option<
         usize,
         *mut c_void,
         *mut c_void,
-        THREAD_CREATION_FLAGS,
+        u32,
         *mut u32,
     ) -> HANDLE,
 > = None;
@@ -93,26 +93,26 @@ extern "system" fn hk_create_thread(
     dw_stack_size: usize,
     lp_start_address: *mut c_void,
     lp_parameter: *mut c_void,
-    dw_creation_flags: THREAD_CREATION_FLAGS,
+    dw_creation_flags: u32,
     lp_thread_id: *mut u32,
 ) -> HANDLE {
-    unsafe {
-        let mut lp_start_address = lp_start_address;
+    let mut lp_start_address = lp_start_address;
 
-        if lp_start_address as usize == INTEGRITY_THREAD_START_ADDRESS {
-            println!("CreateThread: preventing integrity check thread creation");
-            lp_start_address = empty_thread as *mut c_void;
-        }
+    if lp_start_address as usize == INTEGRITY_THREAD_START_ADDRESS {
+        lp_start_address = empty_thread as *mut c_void;
+        println!("CreateThread: prevented integrity check thread creation");
+    }
 
-        return ORIGINAL_CREATE_THREAD.unwrap()(
+    return unsafe {
+        ORIGINAL_CREATE_THREAD.unwrap()(
             lp_thread_attributes,
             dw_stack_size,
             lp_start_address,
             lp_parameter,
             dw_creation_flags,
             lp_thread_id,
-        );
-    }
+        )
+    };
 }
 
 fn hook_integrity_checks() -> Result<(), String> {
@@ -136,10 +136,9 @@ fn hook_integrity_checks() -> Result<(), String> {
 }
 
 pub fn disable_integrity_checks() -> Result<(), String> {
-    println!("Disabling integrity checks...");
-
     hook_integrity_checks()?;
     terminate_integrity_checks()?;
 
+    println!("Integrity checks disabled");
     Ok(())
 }

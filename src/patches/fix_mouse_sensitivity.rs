@@ -1,3 +1,4 @@
+use std::arch::x86_64::__m128;
 use std::ffi::c_void;
 
 const ROOT_CLOCK_ADDRESS: usize = 0x14525D9D0;
@@ -5,32 +6,34 @@ const GET_AXIS_MOVEMENT_ADDRESS: usize = 0x141F6A320;
 
 const REFERENCE_FRAME_TIME: f32 = 0.016; // 60 FPS
 
+#[allow(improper_ctypes_definitions)]
 static mut ORIGINAL_FUNC: Option<
     unsafe extern "system" fn(
-        a1: usize,
-        a2: usize,
+        a1: i64,
+        a2: i64,
         a3: *mut f32,
-        a4: *mut usize,
-        a5: *mut usize,
+        a4: *mut i64,
+        a5: *mut i64,
         a6: *mut f32,
         invert_factor: f32,
         a8: f32,
         a9: f32,
-    ) -> i128,
+    ) -> __m128,
 > = None;
 
 /// This function handles the mouse sensitivity calculations
-extern "system" fn hk_get_axis_movement(
-    a1: usize,
-    a2: usize,
+#[allow(improper_ctypes_definitions)]
+extern "fastcall" fn hk_get_axis_movement(
+    a1: i64,
+    a2: i64,
     a3: *mut f32,
-    a4: *mut usize,
-    a5: *mut usize,
+    a4: *mut i64,
+    a5: *mut i64,
     a6: *mut f32,
     invert_factor: f32,
     a8: f32,
     a9: f32,
-) -> i128 {
+) -> __m128 {
     unsafe {
         /*
             We adjust the mouse sensitivity by calculating a factor based on the frame delta time.
@@ -66,5 +69,6 @@ pub fn fix_mouse_sensitivity() -> Result<(), String> {
         ORIGINAL_FUNC = trampoline.callable();
     }
 
+    println!("> Mouse sensitivity fixed");
     Ok(())
 }

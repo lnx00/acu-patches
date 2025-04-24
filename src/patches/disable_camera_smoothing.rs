@@ -10,6 +10,6 @@ pub fn disable_camera_smoothing() -> Result<(), String> {
     let patch_bytes: [u8; 2] = [0x90, 0x90];
     utils::patch_bytes(smooth_check, &patch_bytes)?;
 
-    println!("Camera smoothing disabled");
+    println!("> Camera smoothing disabled");
     Ok(())
 }

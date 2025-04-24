@@ -135,6 +135,9 @@ fn hook_integrity_checks() -> Result<(), String> {
     Ok(())
 }
 
+/// Hooks `CreateThread` to prevent new integrity checks from starting and
+/// terminates any existing integrity check threads, in case the dll has been
+/// loaded after the game started.
 pub fn disable_integrity_checks() -> Result<(), String> {
     hook_integrity_checks()?;
     terminate_integrity_checks()?;

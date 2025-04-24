@@ -45,14 +45,20 @@ extern "system" fn hk_handle_input(
     a15: f32,
 ) -> u8 {
     unsafe {
-        //println!("hook called");
+        /*
+            We adjust the mouse sensitivity by calculating a factor based on the frame delta time.
+            We take the mouse sensitivity at 60 FPS (0.016 ms) as a reference and scale the default
+            sensitivity factor (0.15), so it results in the same sensitivity at any FPS.
+
+            EDIT: Apparently, the value at `SENSITIVITY_FACTOR_ADDRESS` is used multiple times throughout the game,
+            so we shouldn't change it... i guess that's why it was protected in the first place.
+        */
 
         // game root clock is stored at 0x14525D9D0
         let g_root_clock = *(ROOT_CLOCK_ADDRESS as *mut usize) as *mut u8;
         let frame_delta_time = *(g_root_clock.offset(0x18) as *mut f32);
 
         // read the f32 value stored at 0x142E77F18. This is the mouse sensitivity.
-        //let sensitivity_factor = *(0x142E77F18 as *mut f32);
         let p_sensitivity_factor = SENSITIVITY_FACTOR_ADDRESS as *mut f32;
         if !p_sensitivity_factor.is_null() {
             let sensitivity_factor = *p_sensitivity_factor;
@@ -61,7 +67,6 @@ extern "system" fn hk_handle_input(
             // write the new value to the memory address that p_sensitivity_factor points to.
             p_sensitivity_factor.write(new_factor);
 
-            //*(0x142E77F18 as *mut f32) = new_factor;
             println!(
                 "frame delta time: {}, old factor: {}, new factor: {}",
                 frame_delta_time, sensitivity_factor, new_factor
@@ -88,6 +93,8 @@ extern "system" fn hk_handle_input(
     }
 }
 
+/// *Tries* to fix the mouse sensitivity getting low at high FPS.
+/// This isn't a perfect solution, but better than nothing.
 pub fn fix_mouse_sensitivity() -> Result<(), String> {
     unsafe {
         // Allow changes to the sensitivity factor

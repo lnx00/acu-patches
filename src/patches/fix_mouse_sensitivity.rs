@@ -1,6 +1,8 @@
 use std::arch::x86_64::__m128;
 use std::ffi::c_void;
 
+use crate::game::Clock;
+
 const ROOT_CLOCK_ADDRESS: usize = 0x14525D9D0;
 const GET_AXIS_MOVEMENT_ADDRESS: usize = 0x141F6A320;
 
@@ -21,7 +23,6 @@ static mut ORIGINAL_FUNC: Option<
     ) -> __m128,
 > = None;
 
-/// This function handles the mouse sensitivity calculations
 #[allow(improper_ctypes_definitions)]
 extern "fastcall" fn hk_get_axis_movement(
     a1: i64,
@@ -36,14 +37,15 @@ extern "fastcall" fn hk_get_axis_movement(
 ) -> __m128 {
     unsafe {
         /*
-            We adjust the mouse sensitivity by calculating a factor based on the frame delta time.
-            We take the mouse sensitivity at 60 FPS (0.016 ms) as a reference and scale axis movement
-            calculation accordingly. This will result in the same mouse sensitivity at any FPS.
+            We adjust the mouse sensitivity by multiplying the axis movement with a factor, that
+            is inversely proportional to the frame time. This will keep the sensitivity constant,
+            regardless of the FPS.
+
+            We use the mouse sensitivity at 60 FPS (0.016 ms frame time) as a reference.
         */
 
-        // game root clock is stored at 0x14525D9D0
-        let g_root_clock = *(ROOT_CLOCK_ADDRESS as *mut usize) as *mut u8;
-        let frame_delta_time = *(g_root_clock.offset(0x18) as *mut f32);
+        let g_root_clock = &**(ROOT_CLOCK_ADDRESS as *mut *mut Clock);
+        let frame_delta_time = g_root_clock.delta_time;
 
         let new_factor = REFERENCE_FRAME_TIME / frame_delta_time;
 
@@ -59,7 +61,6 @@ extern "fastcall" fn hk_get_axis_movement(
 /// Fixes the mouse sensitivity being tied to the FPS.
 pub fn fix_mouse_sensitivity() -> Result<(), String> {
     unsafe {
-        // Hook the function responsible for mouse sensitivity calculations
         let original_func: usize = GET_AXIS_MOVEMENT_ADDRESS;
         let hook_func: usize = hk_get_axis_movement as *mut c_void as usize;
 
@@ -69,6 +70,6 @@ pub fn fix_mouse_sensitivity() -> Result<(), String> {
         ORIGINAL_FUNC = trampoline.callable();
     }
 
-    println!("> Mouse sensitivity fixed");
+    println!("> Mouse sensitivity fix applied");
     Ok(())
 }

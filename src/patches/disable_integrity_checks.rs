@@ -16,12 +16,12 @@ const INTEGRITY_THREAD_START_ADDRESS: usize = 0x14275DE50;
 
 static mut ORIGINAL_CREATE_THREAD: Option<
     unsafe extern "system" fn(
-        *mut c_void,
-        usize,
-        *mut c_void,
-        *mut c_void,
-        u32,
-        *mut u32,
+        lp_thread_attributes: *mut c_void,
+        dw_stack_size: usize,
+        lp_start_address: *mut c_void,
+        lp_parameter: *mut c_void,
+        dw_creation_flags: u32,
+        lp_thread_id: *mut u32,
     ) -> HANDLE,
 > = None;
 
@@ -117,12 +117,14 @@ extern "system" fn hk_create_thread(
 
 fn hook_integrity_checks() -> Result<(), String> {
     unsafe {
+        // Get the address of kernel32::CreateThread
         let kernel32_handle = GetModuleHandleA(s!("kernel32.dll"))
             .map_err(|_| "failed to get kernel32.dll handle")?;
 
         let fp_create_thread = GetProcAddress(kernel32_handle, s!("CreateThread"))
             .ok_or("failed to get CreateThread address")?;
 
+        // Hook the CreateThread function
         let create_thread_address = fp_create_thread as *mut c_void as usize;
         let hook_address = hk_create_thread as *mut c_void as usize;
 

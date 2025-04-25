@@ -7,6 +7,7 @@ use windows::Win32::{
     },
 };
 
+mod game;
 mod patches;
 mod platform;
 mod utils;
@@ -30,7 +31,7 @@ fn apply_patches() {
     }
 }
 
-fn main_thread(hinst_dll: SendWrapper<HINSTANCE>) {
+fn main_thread(dll_module: SendWrapper<HINSTANCE>) {
     platform::attach_console();
 
     apply_patches();
@@ -40,7 +41,7 @@ fn main_thread(hinst_dll: SendWrapper<HINSTANCE>) {
     }
 
     platform::detach_console();
-    unsafe { FreeLibraryAndExitThread(HMODULE(hinst_dll.0.0), 0) };
+    unsafe { FreeLibraryAndExitThread(HMODULE(dll_module.0.0), 0) };
 }
 
 #[unsafe(no_mangle)]

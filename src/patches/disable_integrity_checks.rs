@@ -25,6 +25,8 @@ static mut ORIGINAL_CREATE_THREAD: Option<
     ) -> HANDLE,
 > = None;
 
+static mut WAS_DISABLED: bool = false;
+
 fn check_thread(thread_id: u32) -> Result<bool, String> {
     unsafe {
         let mut thread_start_address = 0x0;
@@ -85,6 +87,7 @@ fn terminate_integrity_checks() -> Result<(), String> {
 }
 
 unsafe extern "system" fn empty_thread(_: *mut c_void) -> u32 {
+    unsafe { WAS_DISABLED = true}
     return 0;
 }
 
@@ -135,6 +138,10 @@ fn hook_integrity_checks() -> Result<(), String> {
     }
 
     Ok(())
+}
+
+pub fn is_integrity_checks_disabled() -> bool {
+    unsafe { WAS_DISABLED }
 }
 
 /// Hooks `CreateThread` to prevent new integrity checks from starting and

@@ -3,8 +3,8 @@ use crate::utils;
 pub fn disable_camera_smoothing() -> Result<(), String> {
     /*
         The game already has logic for disabling camera smoothing, but it is usually not possible
-        to enable it. We can however patch the condition that checks if mouse smoothing is
-        disable to always run, which uses the mouse movement directly instead of lerping it.
+        to enable it. We can patch the condition that checks if mouse smoothing is disabled to
+        always run, which causes the game to use the mouse movement directly instead of lerping it.
     */
 
     let game_module = libmem::find_module("ACU.exe").ok_or("game module not found")?;

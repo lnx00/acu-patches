@@ -13,14 +13,14 @@ pub fn run_all_patches() -> Result<(), String> {
     }
     println!("Game is ready! Applying patches...");
 
-    DisableCameraSmoothing::inst().write().unwrap().enable()?;
+    DisableCameraSmoothing::inst().lock().unwrap().enable()?;
     fix_mouse_sensitivity::fix_mouse_sensitivity()?;
 
     Ok(())
 }
 
 pub fn disable_all_patches() -> Result<(), String> {
-    DisableCameraSmoothing::inst().write().unwrap().disable()?;
+    DisableCameraSmoothing::inst().lock().unwrap().disable()?;
 
     Ok(())
 }

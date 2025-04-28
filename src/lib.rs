@@ -40,6 +40,8 @@ fn main_thread(dll_module: SendWrapper<HINSTANCE>) {
         thread::sleep(std::time::Duration::from_millis(100));
     }
 
+    let _ = patches::disable_all_patches();
+
     platform::detach_console();
     unsafe { FreeLibraryAndExitThread(HMODULE(dll_module.0.0), 0) };
 }

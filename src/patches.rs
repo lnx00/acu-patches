@@ -1,3 +1,5 @@
+use disable_camera_smoothing::DisableCameraSmoothing;
+
 pub mod disable_camera_smoothing;
 pub mod disable_integrity_checks;
 pub mod fix_mouse_sensitivity;
@@ -11,8 +13,14 @@ pub fn run_all_patches() -> Result<(), String> {
     }
     println!("Game is ready! Applying patches...");
 
-    disable_camera_smoothing::disable_camera_smoothing()?;
+    DisableCameraSmoothing::inst().write().unwrap().enable()?;
     fix_mouse_sensitivity::fix_mouse_sensitivity()?;
+
+    Ok(())
+}
+
+pub fn disable_all_patches() -> Result<(), String> {
+    DisableCameraSmoothing::inst().write().unwrap().disable()?;
 
     Ok(())
 }

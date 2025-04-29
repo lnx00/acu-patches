@@ -17,32 +17,26 @@ unsafe impl<T> Send for SendWrapper<T> {}
 
 pub const VK_F11: i32 = 0x7A;
 
-fn apply_patches() {
-    if let Err(e) = patches::run_all_patches() {
-        platform::msg_box(
-            &format!("Failed to apply patches: {}", e),
-            "Error",
-            platform::MsgBoxType::Error,
-        );
-
-        eprintln!("Failed to apply patches: {}", e);
-    } else {
-        println!("Patches applied successfully!");
-    }
-}
-
-fn main_thread(dll_module: SendWrapper<HINSTANCE>) {
+fn run() -> Result<(), String> {
     platform::attach_console();
-
-    apply_patches();
+    patches::run_all_patches()?;
 
     while !platform::is_button_down(VK_F11) {
         thread::sleep(std::time::Duration::from_millis(100));
     }
 
-    let _ = patches::disable_all_patches();
-
+    patches::disable_all_patches()?;
     platform::detach_console();
+
+    Ok(())
+}
+
+fn main_thread(dll_module: SendWrapper<HINSTANCE>) {
+    if let Err(e) = run() {
+        eprintln!("Error: {}", e);
+        platform::msg_box(&e, "Error", platform::MsgBoxType::Error);
+    }
+
     unsafe { FreeLibraryAndExitThread(HMODULE(dll_module.0.0), 0) };
 }
 

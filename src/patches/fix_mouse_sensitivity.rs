@@ -1,5 +1,6 @@
 use std::arch::x86_64::__m128;
 use std::ffi::c_void;
+use std::sync::{Arc, LazyLock, Mutex};
 
 use crate::game::Clock;
 
@@ -9,19 +10,61 @@ const GET_AXIS_MOVEMENT_ADDRESS: usize = 0x141F6A320;
 const REFERENCE_FRAME_TIME: f32 = 0.016; // 60 FPS
 
 #[allow(improper_ctypes_definitions)]
-static mut ORIGINAL_FUNC: Option<
-    unsafe extern "system" fn(
-        a1: i64,
-        a2: i64,
-        a3: *mut f32,
-        a4: *mut i64,
-        a5: *mut i64,
-        a6: *mut f32,
-        invert_factor: f32,
-        a8: f32,
-        a9: f32,
-    ) -> __m128,
-> = None;
+type AxisMovementFn = unsafe extern "system" fn(
+    a1: i64,
+    a2: i64,
+    a3: *mut f32,
+    a4: *mut i64,
+    a5: *mut i64,
+    a6: *mut f32,
+    invert_factor: f32,
+    a8: f32,
+    a9: f32,
+) -> __m128;
+
+/// Fixes the mouse sensitivity being tied to the FPS.
+pub struct MouseSensitivityFix {
+    original_func: Option<AxisMovementFn>,
+    trampoline: Option<libmem::Trampoline>,
+}
+
+static INSTANCE: LazyLock<Arc<Mutex<MouseSensitivityFix>>> = LazyLock::new(|| {
+    Arc::new(Mutex::new(MouseSensitivityFix {
+        original_func: None,
+        trampoline: None,
+    }))
+});
+
+impl MouseSensitivityFix {
+    pub fn inst() -> Arc<Mutex<Self>> {
+        INSTANCE.clone()
+    }
+
+    pub fn enable(&mut self) -> Result<(), String> {
+        let original_func: usize = GET_AXIS_MOVEMENT_ADDRESS;
+        let hook_func: usize = hk_get_axis_movement as *mut c_void as usize;
+
+        unsafe {
+            let trampoline =
+                libmem::hook_code(original_func, hook_func).ok_or("failed to hook function")?;
+
+            self.original_func = trampoline.callable();
+            self.trampoline = Some(trampoline);
+        }
+
+        Ok(())
+    }
+
+    pub fn disable(&mut self) -> Result<(), String> {
+        if let Some(trampoline) = self.trampoline.take() {
+            unsafe {
+                libmem::unhook_code(GET_AXIS_MOVEMENT_ADDRESS, trampoline);
+            }
+        }
+        
+        Ok(())
+    }
+}
 
 #[allow(improper_ctypes_definitions)]
 extern "fastcall" fn hk_get_axis_movement(
@@ -54,22 +97,10 @@ extern "fastcall" fn hk_get_axis_movement(
             frame_delta_time, new_factor
         );*/
 
-        return ORIGINAL_FUNC.unwrap()(a1, a2, a3, a4, a5, a6, invert_factor * new_factor, a8, a9);
+        return MouseSensitivityFix::inst()
+            .lock()
+            .unwrap()
+            .original_func
+            .unwrap()(a1, a2, a3, a4, a5, a6, invert_factor * new_factor, a8, a9);
     }
-}
-
-/// Fixes the mouse sensitivity being tied to the FPS.
-pub fn fix_mouse_sensitivity() -> Result<(), String> {
-    unsafe {
-        let original_func: usize = GET_AXIS_MOVEMENT_ADDRESS;
-        let hook_func: usize = hk_get_axis_movement as *mut c_void as usize;
-
-        let trampoline =
-            libmem::hook_code(original_func, hook_func).ok_or("failed to hook function")?;
-
-        ORIGINAL_FUNC = trampoline.callable();
-    }
-
-    println!("> Mouse sensitivity fix applied");
-    Ok(())
 }

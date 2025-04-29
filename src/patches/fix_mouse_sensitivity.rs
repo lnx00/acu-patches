@@ -1,8 +1,10 @@
 use std::arch::x86_64::__m128;
 use std::ffi::c_void;
-use std::sync::{Arc, LazyLock, Mutex};
+use std::sync::{LazyLock, Mutex, MutexGuard};
 
 use crate::game::Clock;
+
+use super::Feature;
 
 const ROOT_CLOCK_ADDRESS: usize = 0x14525D9D0;
 const GET_AXIS_MOVEMENT_ADDRESS: usize = 0x141F6A320;
@@ -28,19 +30,18 @@ pub struct MouseSensitivityFix {
     trampoline: Option<libmem::Trampoline>,
 }
 
-static INSTANCE: LazyLock<Arc<Mutex<MouseSensitivityFix>>> = LazyLock::new(|| {
-    Arc::new(Mutex::new(MouseSensitivityFix {
+static INSTANCE: LazyLock<Mutex<MouseSensitivityFix>> = LazyLock::new(|| {
+    Mutex::new(MouseSensitivityFix {
         original_func: None,
         trampoline: None,
-    }))
+    })
 });
-
-impl MouseSensitivityFix {
-    pub fn inst() -> Arc<Mutex<Self>> {
-        INSTANCE.clone()
+impl Feature for MouseSensitivityFix {
+    fn inst() -> MutexGuard<'static, Self> {
+        INSTANCE.lock().unwrap()
     }
 
-    pub fn enable(&mut self) -> Result<(), String> {
+    fn enable(&mut self) -> Result<(), String> {
         let original_func: usize = GET_AXIS_MOVEMENT_ADDRESS;
         let hook_func: usize = hk_get_axis_movement as *mut c_void as usize;
 
@@ -55,13 +56,13 @@ impl MouseSensitivityFix {
         Ok(())
     }
 
-    pub fn disable(&mut self) -> Result<(), String> {
+    fn disable(&mut self) -> Result<(), String> {
         if let Some(trampoline) = self.trampoline.take() {
             unsafe {
                 libmem::unhook_code(GET_AXIS_MOVEMENT_ADDRESS, trampoline);
             }
         }
-        
+
         Ok(())
     }
 }
@@ -97,10 +98,16 @@ extern "fastcall" fn hk_get_axis_movement(
             frame_delta_time, new_factor
         );*/
 
-        return MouseSensitivityFix::inst()
-            .lock()
-            .unwrap()
-            .original_func
-            .unwrap()(a1, a2, a3, a4, a5, a6, invert_factor * new_factor, a8, a9);
+        return MouseSensitivityFix::inst().original_func.unwrap()(
+            a1,
+            a2,
+            a3,
+            a4,
+            a5,
+            a6,
+            invert_factor * new_factor,
+            a8,
+            a9,
+        );
     }
 }

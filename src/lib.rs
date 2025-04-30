@@ -18,25 +18,36 @@ unsafe impl<T> Send for SendWrapper<T> {}
 pub const VK_F11: i32 = 0x7A;
 
 fn run() -> Result<(), String> {
-    platform::attach_console();
+    println!("Disabling integrity checks...");
+    game::disable_integrity_checks()?;
+
+    println!("Integrity checks disabled! Waiting for the game...");
+    game::wait_for_game();
+
+    println!("Game ready! Applying patches...");
     patches::run_all_patches()?;
 
+    println!("All patches applied successfully!");
     while !platform::is_button_down(VK_F11) {
         thread::sleep(std::time::Duration::from_millis(100));
     }
 
+    println!("Unloading patches...");
     patches::disable_all_patches()?;
-    platform::detach_console();
+    game::cleanup_integrity_checks()?;
 
     Ok(())
 }
 
 fn main_thread(dll_module: SendWrapper<HINSTANCE>) {
+    platform::attach_console();
+
     if let Err(e) = run() {
         eprintln!("Error: {}", e);
         platform::msg_box(&e, "Error", platform::MsgBoxType::Error);
     }
 
+    platform::detach_console();
     unsafe { FreeLibraryAndExitThread(HMODULE(dll_module.0.0), 0) };
 }
 

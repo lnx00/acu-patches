@@ -3,6 +3,7 @@ use windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState;
 use windows::Win32::UI::WindowsAndMessaging::*;
 use windows_strings::PCSTR;
 
+#[allow(dead_code)]
 pub enum MsgBoxType {
     Info,
     Warning,

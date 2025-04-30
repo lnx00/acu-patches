@@ -6,11 +6,6 @@ use crate::game::Clock;
 
 use super::Feature;
 
-const ROOT_CLOCK_ADDRESS: usize = 0x14525D9D0;
-const GET_AXIS_MOVEMENT_ADDRESS: usize = 0x141F6A320;
-
-const REFERENCE_FRAME_TIME: f32 = 0.016; // 60 FPS
-
 #[allow(improper_ctypes_definitions)]
 type AxisMovementFn = unsafe extern "system" fn(
     a1: i64,
@@ -23,6 +18,11 @@ type AxisMovementFn = unsafe extern "system" fn(
     a8: f32,
     a9: f32,
 ) -> __m128;
+
+const ROOT_CLOCK_ADDRESS: usize = 0x14525D9D0;
+const GET_AXIS_MOVEMENT_ADDRESS: usize = 0x141F6A320;
+
+const REFERENCE_FRAME_TIME: f32 = 0.016; // 60 FPS
 
 /// Fixes the mouse sensitivity being tied to the FPS.
 pub struct MouseSensitivityFix {

@@ -61,7 +61,6 @@ fn check_thread(thread_id: u32) -> Result<bool, String> {
 
         if thread_start_address == INTEGRITY_THREAD_START_ADDRESS {
             TerminateThread(thread_handle, 0x0).map_err(|_| "failed to terminate thread")?;
-
             return Ok(true);
         }
     }
@@ -84,7 +83,7 @@ pub fn terminate_integrity_checks() -> Result<(), String> {
                 }
 
                 Err(e) => {
-                    return Err(format!("Error checking thread {}: {}", thread.tid, e));
+                    eprintln!("Error checking thread {}: {}", thread.tid, e);
                 }
 
                 _ => {}

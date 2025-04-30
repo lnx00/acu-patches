@@ -2,7 +2,7 @@ use std::sync::{LazyLock, Mutex, MutexGuard};
 
 use crate::utils;
 
-use super::Feature;
+use super::Patch;
 
 pub struct DisableCameraSmoothing {
     target_address: usize,
@@ -25,19 +25,19 @@ static INSTANCE: LazyLock<Mutex<DisableCameraSmoothing>> = LazyLock::new(|| {
     })
 });
 
-impl Feature for DisableCameraSmoothing {
+impl Patch for DisableCameraSmoothing {
     fn inst() -> MutexGuard<'static, Self> {
         INSTANCE.lock().unwrap()
     }
 
-    fn enable(&mut self) -> Result<(), String> {
+    fn apply(&mut self) -> Result<(), String> {
         let patch_bytes: [u8; 2] = [0x90, 0x90];
         utils::patch_bytes(self.target_address, &patch_bytes)?;
 
         Ok(())
     }
 
-    fn disable(&mut self) -> Result<(), String> {
+    fn revert(&mut self) -> Result<(), String> {
         utils::patch_bytes(self.target_address, self.original_bytes.as_slice())?;
 
         Ok(())

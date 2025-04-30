@@ -27,7 +27,7 @@ fn run() -> Result<(), String> {
     println!("Game ready! Applying patches...");
     patches::run_all_patches()?;
 
-    println!("All patches applied successfully!");
+    println!("All patches applied successfully! Press F11 to unload.");
     while !platform::is_button_down(VK_F11) {
         thread::sleep(std::time::Duration::from_millis(100));
     }

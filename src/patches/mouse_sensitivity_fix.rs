@@ -4,7 +4,7 @@ use std::sync::{LazyLock, Mutex, MutexGuard};
 
 use crate::game::Clock;
 
-use super::Feature;
+use super::Patch;
 
 #[allow(improper_ctypes_definitions)]
 type AxisMovementFn = unsafe extern "system" fn(
@@ -36,12 +36,12 @@ static INSTANCE: LazyLock<Mutex<MouseSensitivityFix>> = LazyLock::new(|| {
         trampoline: None,
     })
 });
-impl Feature for MouseSensitivityFix {
+impl Patch for MouseSensitivityFix {
     fn inst() -> MutexGuard<'static, Self> {
         INSTANCE.lock().unwrap()
     }
 
-    fn enable(&mut self) -> Result<(), String> {
+    fn apply(&mut self) -> Result<(), String> {
         let original_func: usize = GET_AXIS_MOVEMENT_ADDRESS;
         let hook_func: usize = hk_get_axis_movement as *mut c_void as usize;
 
@@ -56,7 +56,7 @@ impl Feature for MouseSensitivityFix {
         Ok(())
     }
 
-    fn disable(&mut self) -> Result<(), String> {
+    fn revert(&mut self) -> Result<(), String> {
         if let Some(trampoline) = self.trampoline.take() {
             unsafe {
                 libmem::unhook_code(GET_AXIS_MOVEMENT_ADDRESS, trampoline);

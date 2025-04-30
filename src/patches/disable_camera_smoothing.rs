@@ -4,6 +4,12 @@ use crate::utils;
 
 use super::Patch;
 
+/*
+    The game already has logic for disabling camera smoothing, but it is usually not possible
+    to enable it. We can patch the condition that checks if mouse smoothing is disabled to
+    always run, which causes the game to use the mouse movement directly instead of lerping it.
+*/
+
 pub struct DisableCameraSmoothing {
     target_address: usize,
     original_bytes: Box<[u8; 2]>,

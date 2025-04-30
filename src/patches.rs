@@ -15,14 +15,20 @@ pub trait Patch {
 
 pub fn run_all_patches() -> Result<(), String> {
     DisableCameraSmoothing::inst().apply()?;
+    println!("- DisableCameraSmoothing applied");
+
     MouseSensitivityFix::inst().apply()?;
+    println!("- MouseSensitivityFix applied");
 
     Ok(())
 }
 
 pub fn disable_all_patches() -> Result<(), String> {
     DisableCameraSmoothing::inst().revert()?;
+    println!("- DisableCameraSmoothing reverted");
+
     MouseSensitivityFix::inst().revert()?;
+    println!("- DisableCameraSmoothing reverted");
 
     Ok(())
 }

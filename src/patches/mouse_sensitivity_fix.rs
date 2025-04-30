@@ -6,6 +6,14 @@ use crate::game::Clock;
 
 use super::Patch;
 
+/*
+    We adjust the mouse sensitivity by multiplying the axis movement with a factor, that
+    is inversely proportional to the frame time. This will keep the sensitivity constant,
+    regardless of the FPS.
+
+    We use the mouse sensitivity at 60 FPS (0.016 ms frame time) as a reference.
+*/
+
 #[allow(improper_ctypes_definitions)]
 type AxisMovementFn = unsafe extern "system" fn(
     a1: i64,
@@ -80,14 +88,6 @@ extern "fastcall" fn hk_get_axis_movement(
     a9: f32,
 ) -> __m128 {
     unsafe {
-        /*
-            We adjust the mouse sensitivity by multiplying the axis movement with a factor, that
-            is inversely proportional to the frame time. This will keep the sensitivity constant,
-            regardless of the FPS.
-
-            We use the mouse sensitivity at 60 FPS (0.016 ms frame time) as a reference.
-        */
-
         let g_root_clock = &**(ROOT_CLOCK_ADDRESS as *mut *mut Clock);
         let frame_delta_time = g_root_clock.delta_time;
 

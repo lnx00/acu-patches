@@ -15,7 +15,9 @@ mod utils;
 struct SendWrapper<T>(T);
 unsafe impl<T> Send for SendWrapper<T> {}
 
-pub const VK_F11: i32 = 0x7A;
+const PKG_VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION");
+
+const VK_F11: i32 = 0x7A;
 
 fn run() -> Result<(), String> {
     println!("Disabling integrity checks...");
@@ -40,7 +42,8 @@ fn run() -> Result<(), String> {
 }
 
 fn main_thread(dll_module: SendWrapper<HINSTANCE>) {
-    platform::attach_console();
+    let title = format!("ACU Patches v{} by lnx00", PKG_VERSION.unwrap_or("?.?.?"));
+    platform::attach_console(&title);
 
     if let Err(e) = run() {
         eprintln!("Error: {}", e);

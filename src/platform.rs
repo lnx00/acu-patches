@@ -1,4 +1,4 @@
-use windows::Win32::System::Console::{AllocConsole, FreeConsole};
+use windows::Win32::System::Console::{AllocConsole, FreeConsole, SetConsoleTitleA};
 use windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState;
 use windows::Win32::UI::WindowsAndMessaging::*;
 use windows_strings::PCSTR;
@@ -10,6 +10,10 @@ pub enum MsgBoxType {
     Error,
 }
 
+fn to_pcstr(text: &str) -> PCSTR {
+    PCSTR(format!("{}\0", text).as_ptr())
+}
+
 pub fn msg_box(msg: &str, title: &str, box_type: MsgBoxType) {
     let icon = match box_type {
         MsgBoxType::Info => MB_ICONINFORMATION,
@@ -18,17 +22,15 @@ pub fn msg_box(msg: &str, title: &str, box_type: MsgBoxType) {
     };
 
     unsafe {
-        MessageBoxA(
-            None,
-            PCSTR(format!("{}\0", msg).as_ptr()),
-            PCSTR(format!("{}\0", title).as_ptr()),
-            MB_OK | icon,
-        );
+        MessageBoxA(None, to_pcstr(msg), to_pcstr(title), MB_OK | icon);
     }
 }
 
-pub fn attach_console() {
-    let _ = unsafe { AllocConsole() };
+pub fn attach_console(title: &str) {
+    unsafe {
+        let _ = AllocConsole();
+        let _ = SetConsoleTitleA(to_pcstr(title));
+    }
 }
 
 pub fn detach_console() {

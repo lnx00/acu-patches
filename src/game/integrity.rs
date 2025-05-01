@@ -15,8 +15,8 @@ use windows::{
             Threading::{OpenThread, THREAD_ALL_ACCESS, TerminateThread},
         },
     },
+    core::s,
 };
-use windows_strings::s;
 
 type CreateThreadFn = unsafe extern "system" fn(
     lp_thread_attributes: *mut c_void,

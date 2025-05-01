@@ -1,7 +1,7 @@
 use windows::Win32::System::Console::{AllocConsole, FreeConsole, SetConsoleTitleA};
 use windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState;
 use windows::Win32::UI::WindowsAndMessaging::*;
-use windows_strings::PCSTR;
+use windows::core::PCSTR;
 
 #[allow(dead_code)]
 pub enum MsgBoxType {

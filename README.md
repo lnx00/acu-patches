@@ -1,19 +1,24 @@
 # ACU Patches
 
-This repository contains a few quality-of-life patches for Assassins's Creed Unity.
+This mod contains some quality-of-life patches to make the gameplay feel better, especially by disabling mouse/camera smoothing and fixing the mouse sensitivity at high frame rates.
 
 ## Features
 
-- **Disable integrity checks:** Allows modifications to the game binary (and even reduces CPU usage)
-- **Disable mouse smoothing:** Makes the mouse feel more responsive
-- **Mouse sensitivity fix:** Fixes the mouse sensitivity being tied to the framerate
+- **Disable mouse smoothing:** Makes the mouse feel more responsive.
+- **Mouse sensitivity fix:** Fixes the mouse sensitivity being tied to the framerate.
+- **Disable integrity checks:** Allows modifications to the game binary.
 
 ## Installation
 
-Inject `acu_patches.dll` into the game using a DLL injector of your choice, or use a tool such as
-[Ultimate-ASI-Loader](https://github.com/ThirteenAG/Ultimate-ASI-Loader) to load the DLL automatically on game launch.
+1. Download and extract the latest mod files (`acu-patches-aio.zip`)
+2. Copy **all** extracted files and folders (`dinput8.dll`, `dinput8.ini`, `plugins/...`) to your game folder (`Assassin's Creed Unity/`)
+3. Run the game. A console window should appear with additional status information.
+
+The mod files contain an ASI loader that will automatically load the mod DLL when launching the game. If the `dinput8.dll` file conflicts
+with any other mod, you can choose an alternative DLL [here](https://github.com/ThirteenAG/Ultimate-ASI-Loader/releases/latest/).
 
 ## Credits
 
-- [ACUFixes by NameTaken3125](https://github.com/NameTaken3125/ACUFixes)
 - [libmem by rdbo](https://github.com/rdbo/libmem)
+- [ACUFixes by NameTaken3125](https://github.com/NameTaken3125/ACUFixes)
+- [Ultimate-ASI-Loader by ThirteenAG](https://github.com/ThirteenAG/Ultimate-ASI-Loader)

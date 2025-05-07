@@ -1,3 +1,4 @@
+use config::Config;
 use std::thread;
 use windows::Win32::{
     Foundation::{HINSTANCE, HMODULE},
@@ -7,6 +8,7 @@ use windows::Win32::{
     },
 };
 
+mod config;
 mod game;
 mod patches;
 mod platform;
@@ -42,15 +44,25 @@ fn run() -> Result<(), String> {
 }
 
 fn main_thread(dll_module: SendWrapper<HINSTANCE>) {
-    let title = format!("ACU Patches v{} by lnx00", PKG_VERSION.unwrap_or("?.?.?"));
-    platform::attach_console(&title);
+    let config = Config::read("./plugins/acu_patches.toml").unwrap_or_default();
 
+    // Attach console window
+    if config.show_console {
+        let title = format!("ACU Patches v{} by lnx00", PKG_VERSION.unwrap_or("?.?.?"));
+        platform::attach_console(&title);
+    }
+
+    // Run main logic
     if let Err(e) = run() {
         eprintln!("Error: {}", e);
         platform::msg_box(&e, "Error", platform::MsgBoxType::Error);
     }
 
-    platform::detach_console();
+    // Detach console
+    if config.show_console {
+        platform::detach_console();
+    }
+
     unsafe { FreeLibraryAndExitThread(HMODULE(dll_module.0.0), 0) };
 }
 

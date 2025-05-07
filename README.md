@@ -20,11 +20,7 @@ with any other mod, you can choose an alternative DLL [here](https://github.com/
 ## Configuration
 
 You can configure the mod by placing a `acu_patches.toml` file next to `acu_patches.asi` in the `plugins` folder.
-Available configurations are:
-
-| Key | Value type | Description |
-|-|-|-|
-| `show_console` | `bool` | Attach debug console on startup |
+An example configuration file can be found [here](./config/acu_patches.toml).
 
 ## Credits
 

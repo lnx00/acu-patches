@@ -24,7 +24,7 @@ pub fn cleanup_integrity_checks() -> Result<(), String> {
 /// Blocks the caller until the game's memory is ready to be patched.
 pub fn wait_for_game() {
     let start_time = Instant::now();
-    let timeout = Duration::from_secs(15);
+    let timeout = Duration::from_secs(25);
 
     while !integrity::was_disabled() {
         if start_time.elapsed() >= timeout {

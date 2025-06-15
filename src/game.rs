@@ -1,4 +1,4 @@
-use std::thread;
+use std::{thread, time::{Duration, Instant}};
 
 pub mod integrity;
 
@@ -23,7 +23,15 @@ pub fn cleanup_integrity_checks() -> Result<(), String> {
 
 /// Blocks the caller until the game's memory is ready to be patched.
 pub fn wait_for_game() {
+    let start_time = Instant::now();
+    let timeout = Duration::from_secs(15);
+
     while !integrity::was_disabled() {
+        if start_time.elapsed() >= timeout {
+            println!("Timeout while waiting for integrity check termination! Assuming that they're already disabled...");
+            return;
+        }
+
         std::thread::sleep(std::time::Duration::from_millis(100));
     }
 

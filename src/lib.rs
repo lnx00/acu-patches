@@ -8,11 +8,14 @@ use windows::Win32::{
     },
 };
 
+use crate::plugin::{make_version, ACUPluginInfo, ACUPluginLoaderInterface};
+
 mod config;
 mod game;
 mod patches;
 mod platform;
 mod utils;
+mod plugin;
 
 struct SendWrapper<T>(T);
 unsafe impl<T> Send for SendWrapper<T> {}
@@ -66,15 +69,32 @@ fn main_thread(dll_module: SendWrapper<HINSTANCE>) {
     unsafe { FreeLibraryAndExitThread(HMODULE(dll_module.0.0), 0) };
 }
 
+extern "C" fn init_patches(_plugin_loader: &ACUPluginLoaderInterface) -> bool {
+    patches::run_all_patches().is_ok()
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ACUPluginStart(
+    _plugin_loader: &ACUPluginLoaderInterface,
+    your_plugin_info_out: &mut ACUPluginInfo,
+) -> bool {
+    your_plugin_info_out.m_plugin_api_version = make_version(0, 9, 1, 0);
+    your_plugin_info_out.m_plugin_version = make_version(0, 4, 0, 0);
+
+    your_plugin_info_out.m_init_stage_when_code_patches_are_safe_to_apply = Some(init_patches);
+
+    true
+}
+
 #[unsafe(no_mangle)]
 #[allow(non_snake_case)]
-extern "system" fn DllMain(dll_module: HINSTANCE, call_reason: u32, _: *mut ()) -> bool {
+extern "system" fn DllMain(_dll_module: HINSTANCE, call_reason: u32, _: *mut ()) -> bool {
     match call_reason {
         DLL_PROCESS_ATTACH => {
-            let safe_dll_module = SendWrapper(dll_module);
+            /*let safe_dll_module = SendWrapper(dll_module);
             thread::spawn(move || {
                 main_thread(safe_dll_module);
-            });
+            });*/
         }
 
         DLL_PROCESS_DETACH => (),

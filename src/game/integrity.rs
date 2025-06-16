@@ -1,9 +1,6 @@
 use std::{
     ffi::c_void,
-    sync::{
-        LazyLock, Mutex, MutexGuard,
-        atomic::{AtomicBool, Ordering},
-    },
+    sync::{LazyLock, Mutex, MutexGuard},
 };
 
 use windows::{
@@ -28,12 +25,6 @@ type CreateThreadFn = unsafe extern "system" fn(
 ) -> HANDLE;
 
 const INTEGRITY_THREAD_START_ADDRESS: usize = 0x14275DE50;
-
-static INTEGRITY_CHECKS_DISABLED: AtomicBool = AtomicBool::new(false);
-
-pub fn was_disabled() -> bool {
-    INTEGRITY_CHECKS_DISABLED.load(Ordering::SeqCst)
-}
 
 fn check_thread(thread_id: u32) -> Result<bool, String> {
     unsafe {
@@ -79,7 +70,6 @@ pub fn terminate_integrity_checks() -> Result<(), String> {
             match check_result {
                 Ok(true) => {
                     println!("Terminated integrity check thread {}", thread.tid);
-                    INTEGRITY_CHECKS_DISABLED.store(true, Ordering::SeqCst);
                 }
 
                 Err(e) => {
@@ -147,7 +137,6 @@ impl IntegrityHook {
     }
 
     extern "system" fn empty_thread(_: *mut c_void) -> u32 {
-        INTEGRITY_CHECKS_DISABLED.store(true, Ordering::SeqCst);
         return 0;
     }
 

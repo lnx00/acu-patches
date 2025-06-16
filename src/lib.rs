@@ -8,7 +8,7 @@ use windows::Win32::{
     },
 };
 
-use crate::plugin::{make_version, ACUPluginInfo, ACUPluginLoaderInterface};
+use crate::plugin::{make_version, ACUPluginInfo, ACUPluginLoaderInterface, PLUGIN_API_VERSION};
 
 mod config;
 mod game;
@@ -75,10 +75,12 @@ extern "C" fn init_patches(_plugin_loader: &ACUPluginLoaderInterface) -> bool {
 
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn ACUPluginStart(
-    _plugin_loader: &ACUPluginLoaderInterface,
+    plugin_loader: &ACUPluginLoaderInterface,
     your_plugin_info_out: &mut ACUPluginInfo,
 ) -> bool {
-    your_plugin_info_out.m_plugin_api_version = make_version(0, 9, 1, 0);
+    println!("ACUFixes plugin loader version {}", plugin_loader.m_plugin_loader_version);
+
+    your_plugin_info_out.m_plugin_api_version = PLUGIN_API_VERSION;
     your_plugin_info_out.m_plugin_version = make_version(0, 4, 0, 0);
 
     your_plugin_info_out.m_init_stage_when_code_patches_are_safe_to_apply = Some(init_patches);

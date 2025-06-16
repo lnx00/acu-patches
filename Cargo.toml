@@ -22,3 +22,4 @@ windows = { version = "0.61", features = [
     "Win32_System_LibraryLoader",
     "Wdk_System_Threading",
 ] }
+assert-offset = "0.1.1"

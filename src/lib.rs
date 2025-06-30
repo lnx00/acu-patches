@@ -8,15 +8,16 @@ use windows::Win32::{
     },
 };
 
-use crate::plugin::{make_version, ACUPluginInfo, ACUPluginLoaderInterface, PLUGIN_API_VERSION};
+use crate::plugin::{ACUPluginInfo, ACUPluginLoaderInterface, PLUGIN_API_VERSION, make_version};
 
 mod config;
 mod game;
 mod patches;
 mod platform;
-mod utils;
 mod plugin;
+mod utils;
 
+/*
 struct SendWrapper<T>(T);
 unsafe impl<T> Send for SendWrapper<T> {}
 
@@ -68,9 +69,23 @@ fn main_thread(dll_module: SendWrapper<HINSTANCE>) {
 
     unsafe { FreeLibraryAndExitThread(HMODULE(dll_module.0.0), 0) };
 }
+*/
 
-extern "C" fn init_patches(_plugin_loader: &ACUPluginLoaderInterface) -> bool {
-    patches::run_all_patches().is_ok()
+fn run() -> Result<(), String> {
+    log::info!("Game ready! Applying patches...");
+    patches::run_all_patches()?;
+
+    Ok(())
+}
+
+extern "C" fn init_patches(plugin_loader: &ACUPluginLoaderInterface) -> bool {
+    plugin_loader.init_logger().expect("failed to init logger");
+
+    if let Err(e) = run() {
+        log::error!("{}", e);
+    }
+
+    true
 }
 
 #[unsafe(no_mangle)]
@@ -78,7 +93,10 @@ pub unsafe extern "C" fn ACUPluginStart(
     plugin_loader: &ACUPluginLoaderInterface,
     your_plugin_info_out: &mut ACUPluginInfo,
 ) -> bool {
-    println!("ACUFixes plugin loader version {}", plugin_loader.m_plugin_loader_version);
+    log::info!(
+        "ACUFixes plugin loader version {}",
+        plugin_loader.m_plugin_loader_version
+    );
 
     your_plugin_info_out.m_plugin_api_version = PLUGIN_API_VERSION;
     your_plugin_info_out.m_plugin_version = make_version(0, 4, 0, 0);
@@ -92,12 +110,7 @@ pub unsafe extern "C" fn ACUPluginStart(
 #[allow(non_snake_case)]
 extern "system" fn DllMain(_dll_module: HINSTANCE, call_reason: u32, _: *mut ()) -> bool {
     match call_reason {
-        DLL_PROCESS_ATTACH => {
-            /*let safe_dll_module = SendWrapper(dll_module);
-            thread::spawn(move || {
-                main_thread(safe_dll_module);
-            });*/
-        }
+        DLL_PROCESS_ATTACH => (),
 
         DLL_PROCESS_DETACH => (),
 

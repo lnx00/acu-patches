@@ -69,11 +69,11 @@ pub fn terminate_integrity_checks() -> Result<(), String> {
             let check_result = check_thread(thread.tid);
             match check_result {
                 Ok(true) => {
-                    println!("Terminated integrity check thread {}", thread.tid);
+                    log::debug!("Terminated integrity check thread {}", thread.tid);
                 }
 
                 Err(e) => {
-                    eprintln!("Error checking thread {}: {}", thread.tid, e);
+                    log::error!("Error checking thread {}: {}", thread.tid, e);
                 }
 
                 _ => {}
@@ -152,7 +152,7 @@ impl IntegrityHook {
 
         if lp_start_address as usize == INTEGRITY_THREAD_START_ADDRESS {
             lp_start_address = Self::empty_thread as *mut c_void;
-            println!("CreateThread: prevented integrity check thread creation");
+            log::debug!("CreateThread: prevented integrity check thread creation");
         }
 
         return unsafe {

@@ -1,14 +1,75 @@
+use std::{
+    ffi::{CString, c_char},
+    sync::OnceLock,
+};
+
 use assert_offset::AssertOffsets;
+use log::{LevelFilter, Log, Metadata, Record};
 use windows::Win32::Foundation::HMODULE;
 
 pub struct ImGuiShared;
-pub struct ACUPluginLoaderSharedGlobals;
+pub struct InputHooks;
+pub struct AnimationModdingInterface;
 
 pub const fn make_version(major: u64, minor: u64, minorer: u64, minorest: u64) -> u64 {
     (major << 24) | (minor << 16) | (minorer << 8) | minorest
 }
 
 pub const PLUGIN_API_VERSION: u64 = make_version(0, 9, 1, 0);
+
+#[derive(AssertOffsets)]
+#[repr(C)]
+pub struct ImGuiConsoleInterface {
+    #[offset(0x0)]
+    pub fnp_add_log: Option<unsafe extern "C" fn(s: *const c_char)>,
+}
+
+impl ImGuiConsoleInterface {
+    pub fn add_log(&self, text: &str) {
+        if let Some(log_fn) = self.fnp_add_log {
+            let c_string = CString::new(text);
+            if let Ok(str) = c_string {
+                unsafe {
+                    log_fn(str.as_ptr());
+                }
+            }
+        }
+    }
+}
+
+static IMGUI_CONSOLE: OnceLock<&'static ImGuiConsoleInterface> = OnceLock::new();
+
+struct ImGuiLogger;
+
+impl Log for ImGuiLogger {
+    fn enabled(&self, _metadata: &Metadata) -> bool {
+        true
+    }
+
+    fn log(&self, record: &Record) {
+        let formatted = format!("[acu_fixes][{}] {}", record.level(), record.args());
+        println!("{}", formatted);
+
+        if let Some(console) = IMGUI_CONSOLE.get() {
+            console.add_log(&formatted);
+        }
+    }
+
+    fn flush(&self) {}
+}
+
+#[derive(AssertOffsets)]
+#[repr(C)]
+pub struct ACUPluginLoaderSharedGlobals {
+    #[offset(0x0)]
+    pub input_hooks: *mut InputHooks,
+
+    #[offset(0x8)]
+    pub animation_modding: *mut AnimationModdingInterface,
+
+    #[offset(0x10)]
+    pub imgui_console: *mut ImGuiConsoleInterface,
+}
 
 /// Interface provided by the plugin loader to plugins
 #[derive(AssertOffsets)]
@@ -29,6 +90,23 @@ pub struct ACUPluginLoaderInterface {
     /// Shared variables from the implementation
     #[offset(0x18)]
     pub m_implementation_shared_variables: *mut ACUPluginLoaderSharedGlobals,
+}
+
+impl ACUPluginLoaderInterface {
+    pub fn init_logger(&self) -> Result<(), log::SetLoggerError> {
+        if let Some(console) = unsafe {
+            self.m_implementation_shared_variables
+                .as_ref()
+                .and_then(|globals| globals.imgui_console.as_ref())
+        } {
+            let _ = IMGUI_CONSOLE.set(console);
+        }
+
+        log::set_boxed_logger(Box::new(ImGuiLogger))?;
+        log::set_max_level(LevelFilter::Debug);
+
+        Ok(())
+    }
 }
 
 #[derive(AssertOffsets)]

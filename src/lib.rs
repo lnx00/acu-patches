@@ -78,9 +78,7 @@ fn run() -> Result<(), String> {
     Ok(())
 }
 
-extern "C" fn init_patches(plugin_loader: &ACUPluginLoaderInterface) -> bool {
-    plugin_loader.init_logger().expect("failed to init logger");
-
+extern "C" fn init_patches(_plugin_loader: &ACUPluginLoaderInterface) -> bool {
     if let Err(e) = run() {
         log::error!("{}", e);
     }
@@ -93,8 +91,10 @@ pub unsafe extern "C" fn ACUPluginStart(
     plugin_loader: &ACUPluginLoaderInterface,
     your_plugin_info_out: &mut ACUPluginInfo,
 ) -> bool {
+    let _ = plugin_loader.init_logger();
+
     log::info!(
-        "ACUFixes plugin loader version {}",
+        "Hello ACUFixes plugin loader version {}",
         plugin_loader.m_plugin_loader_version
     );
 

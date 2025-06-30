@@ -16,6 +16,7 @@ pub const fn make_version(major: u64, minor: u64, minorer: u64, minorest: u64) -
 }
 
 pub const PLUGIN_API_VERSION: u64 = make_version(0, 9, 1, 0);
+const PKG_NAME: Option<&str> = option_env!("CARGO_PKG_NAME");
 
 #[derive(AssertOffsets)]
 #[repr(C)]
@@ -47,7 +48,7 @@ impl Log for ImGuiLogger {
     }
 
     fn log(&self, record: &Record) {
-        let formatted = format!("[acu_fixes][{}] {}", record.level(), record.args());
+        let formatted = format!("[{}][{}] {}", PKG_NAME.unwrap_or("???"), record.level(), record.args());
         println!("{}", formatted);
 
         if let Some(console) = IMGUI_CONSOLE.get() {
